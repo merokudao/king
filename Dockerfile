@@ -14,6 +14,6 @@
  # King Nginx image
  FROM nginx:1.23.2-alpine as nginx
 
- EXPOSE 8080
+ EXPOSE 8080 80
 
  COPY --from=dist /src/dist/king  /usr/share/nginx/html
