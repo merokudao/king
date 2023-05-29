@@ -14,4 +14,6 @@
  # King Nginx image
  FROM nginx:1.23.2-alpine as nginx
 
+ EXPOSE 4200
+
  COPY --from=dist /src/dist/king  /usr/share/nginx/html
