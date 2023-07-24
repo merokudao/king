@@ -1,10 +1,10 @@
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
+import {COMMA, ENTER} from '@angular/cdk/keycodes';
+import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
+import {FormBuilder, Validators} from '@angular/forms';
+import {MatAutocompleteSelectedEvent} from '@angular/material/autocomplete';
+import {MatChipInputEvent} from '@angular/material/chips';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {TranslateService} from '@ngx-translate/core';
 import {
     get as _get,
     isArray as _isArray,
@@ -14,13 +14,13 @@ import {
     sortedUniq as _sortedUniq,
     toInteger as _toInteger
 } from 'lodash';
-import { AutoUnsubscribe } from 'ngx-auto-unsubscribe';
-import { forkJoin } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { ApiService } from '../../services/api.service';
-import { ToastService } from '../../services/toast.service';
-import { CustomValidators } from '../../shared/custom-validators';
-import { Utils } from '../../shared/utils';
+import {AutoUnsubscribe} from 'ngx-auto-unsubscribe';
+import {forkJoin} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {ApiService} from '../../services/api.service';
+import {ToastService} from '../../services/toast.service';
+import {CustomValidators} from '../../shared/custom-validators';
+import {Utils} from '../../shared/utils';
 
 @AutoUnsubscribe()
 @Component({
@@ -39,11 +39,14 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
     servicesList;
     routesList;
     consumersList;
-    pluginsList;
+    pluginsEnabled;
     pluginForm = [];
     arrayOfStrings = [];
     arrayOfRecords = [];
+    mapFields = [];
     fieldTypes = {};
+    plugins = [];
+
     readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
     form = this.fb.group({
@@ -65,22 +68,35 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
     });
 
     constructor(@Inject(MAT_DIALOG_DATA) public pluginData: any, private fb: FormBuilder, private api: ApiService, private toast: ToastService,
-                public dialogRef: MatDialogRef<DialogNewPluginComponent>, private translate: TranslateService) { }
+                public dialogRef: MatDialogRef<DialogNewPluginComponent>, private translate: TranslateService) {
+    }
 
     /*
         Getters de campos del formulario
      */
-    get nameField() { return this.form.get('name'); }
+    get nameField() {
+        return this.form.get('name');
+    }
 
-    get instanceNameField() { return this.form.get('instance_name'); }
+    get instanceNameField() {
+        return this.form.get('instance_name');
+    }
 
-    get serviceField() { return this.form.get('service.id'); }
+    get serviceField() {
+        return this.form.get('service.id');
+    }
 
-    get routeField() { return this.form.get('route.id'); }
+    get routeField() {
+        return this.form.get('route.id');
+    }
 
-    get consumerField() { return this.form.get('consumer.id'); }
+    get consumerField() {
+        return this.form.get('consumer.id');
+    }
 
-    get protocolsField() { return this.form.get('protocols'); }
+    get protocolsField() {
+        return this.form.get('protocols');
+    }
 
     ngOnInit(): void {
         // Recojo del api los datos
@@ -88,10 +104,17 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
             this.api.getServices(),
             this.api.getRoutes(),
             this.api.getConsumers(),
-            this.api.getPluginsEnabled()
-        ]).pipe(map(([services, routes, consumers, plugins]) => {
+            this.api.getPluginsEnabled(),
+            this.api.getPlugins()
+        ]).pipe(map(([services, routes, consumers, pluginsEnabled, plugins]) => {
             // forkJoin returns an array of values, here we map those values to an object
-            return {services: services['data'], routes: routes['data'], consumers: consumers['data'], plugins: plugins['enabled_plugins']};
+            return {
+                services: services['data'],
+                routes: routes['data'],
+                consumers: consumers['data'],
+                pluginsEnabled: pluginsEnabled['enabled_plugins'],
+                plugins: plugins['data']
+            };
         })).subscribe((value) => {
             value.services = _orderBy(value.services, ['name'], ['asc']);
             value.routes = _orderBy(value.routes, ['name'], ['asc']);
@@ -100,7 +123,8 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
             this.servicesList = value.services;
             this.routesList = value.routes;
             this.consumersList = value.consumers;
-            this.pluginsList = value.plugins.sort();
+            this.pluginsEnabled = value.pluginsEnabled.sort();
+            this.plugins = value.plugins;
 
             // ¿vienen datos extra con el service, route o consumer ya elegido?
             if (this.pluginData !== null && this.pluginData.extras !== null) {
@@ -152,11 +176,28 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
     }
 
+    onPluginChange(event) {
+        // Find the selected route in the routes array
+        const selectedPlugin = this.plugins.find(plugin => plugin.id === event.value);
+        const selectedPluginCopy = {...selectedPlugin};
+
+        if (selectedPlugin) {
+            // Prepare the data for the form based on the selected route
+            this.nameField.setValue(selectedPluginCopy['name']);
+            this.pluginChange(selectedPluginCopy);
+        }
+    }
+
     /*
         Submit del formulario
      */
     onSubmit() {
         const result = this.prepareDataForKong(this.form.value);
+
+        if (!result) {
+            return;
+        }
+
         if (!this.editMode) {
             // llamo al API
             this.api.postNewPlugin(result)
@@ -237,23 +278,34 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
             // Cojo el array de valores
             let fValue = _get(plugin, field, null);
 
-            // Los maps
-            const confField = field.replace('config.', '');
-            if (fValue !== null && this.fieldTypes[confField] === 'map') {
-                fValue = this.flattenObj(fValue);
-            }
-
             if (fValue !== null && _isArray(fValue)) {
                 _set(plugin, field, fValue.join('\n'));
             } else if (fValue !== null && _isObject(fValue)) {
                 const keys = Object.getOwnPropertyNames(fValue);
                 let converted = [];
-
                 keys.forEach(key => {
                     converted.push(key + ':' + fValue[key]);
                 });
 
                 _set(plugin, field, '' + converted.join('\n'));
+            } else {
+                _set(plugin, field, null);
+            }
+        });
+
+        // Campos map
+        this.mapFields.forEach(field => {
+            // Cojo el array de valores
+            let fValue = _get(plugin, field, null);
+
+            const confField = field.replace('config.', '');
+            if (fValue !== null && this.fieldTypes[confField] === 'map') {
+                try {
+                    fValue = JSON.stringify(fValue);
+                    _set(plugin, field, fValue);
+                } catch (e) {
+                    this.toast.error_general(this.translate.instant('plugin.error.readMap', {field: field}), {disableTimeOut: true});
+                }
             } else {
                 _set(plugin, field, null);
             }
@@ -309,32 +361,6 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
                     output = values.map((el) => {
                         return _toInteger(el);
                     });
-                }
-                // Si es map, transformo a objeto
-                else if (this.fieldTypes[confField] === 'map') {
-                    output = {};
-                    values.forEach(val => {
-                        let [a, b] = val.split(':');
-                        if (a !== undefined && b !== undefined) {
-                            // Intento pasar a número si lo es
-                            let newB = parseInt(b);
-                            if (!isNaN(newB)) {
-                                b = newB;
-                            }
-
-                            // Sub-objects
-                            const sub = a.split('.');
-                            if (sub.length > 1) {
-                                const first = sub.shift();
-                                if (!output[first]) {
-                                    output[first] = {};
-                                }
-                                output[first][sub.join('.')] = b;
-                            } else {
-                                output[a] = b;
-                            }
-                        }
-                    });
                 } else {
                     output = values;
                 }
@@ -369,6 +395,19 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
             _set(body, field, output);
         });
 
+        // campos map
+        this.mapFields.forEach(field => {
+            const fValue = _get(body, field);
+            let output = "";
+            try {
+                output = JSON.parse(fValue);
+                _set(body, field, output);
+            } catch (e) {
+                this.toast.error_general(this.translate.instant('plugin.error.map', {field: field}), {disableTimeOut: true});
+                return null;
+            }
+        });
+
         return body;
     }
 
@@ -382,6 +421,7 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
                 const pluginSchemaFields = this.parseSchema(value);
                 this.arrayOfStrings = [];
                 this.arrayOfRecords = [];
+                this.mapFields = [];
                 this.fieldTypes = {};
                 this.form.get('config').reset();
 
@@ -523,7 +563,7 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
                         validators.push(Validators.required);
                     }
 
-                    this.arrayOfStrings.push(currentGroup + '.' + field);
+                    this.mapFields.push(currentGroup + '.' + field);
                     this.fieldTypes[field] = value.type;
 
                     dConfig.addControl(field, this.fb.control(value.default, validators));
@@ -544,7 +584,7 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
                     // Requerido
                     if (value.required) {
                         // Si el valor por defecto es un array vacío, quito el requerido
-                        if (value.default.length === 0) {
+                        if (value.default !== undefined && value.default !== null && value.default.length === 0) {
                             value.required = false;
                         } else {
                             validators.push(Validators.required);
@@ -616,7 +656,6 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
         this.routeField.enable();
         this.consumerField.enable();
         this.validProtocols = this.defaultProtocols;
-
         schema.fields.forEach(field => {
             if (field['protocols'] && field['protocols']['elements'] && field['protocols']['elements']['one_of']) {
                 this.validProtocols = field['protocols']['elements']['one_of'];
@@ -634,12 +673,14 @@ export class DialogNewPluginComponent implements OnInit, OnDestroy {
                 res = field['config'].fields;
             }
         });
-
         return res;
     }
 
     createDocLink(plugin: string): string {
         let url = 'https://docs.konghq.com/hub/kong-inc/' + plugin;
+        if (plugin === 'jwt-keycloak') {
+            url = 'https://github.com/hanfi/kong-plugin-jwt-keycloak/blob/master/README.md';
+        }
 
         if (plugin === 'proxy-cache-redis') {
             url = 'https://github.com/ligreman/kong-proxy-cache-redis-plugin/blob/master/README.md';

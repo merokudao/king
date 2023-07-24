@@ -28,16 +28,20 @@
                 <mat-icon class="color-upstream">share</mat-icon>
                 {{ 'header.menu.upstreams' | translate | uppercase }}
             </button>
+            <button mat-menu-item routerLink="/plugin-list" routerLinkActive="active-route">
+                <mat-icon class="color-plugin">settings_input_component</mat-icon>
+                {{ 'header.menu.plugins' | translate | uppercase }}
+            </button>
             <button mat-menu-item routerLink="/element-vault" routerLinkActive="active-route">
                 <mat-icon class="color-vault">work</mat-icon>
                 {{ 'header.menu.vaults' | translate | uppercase }}
             </button>
         </mat-menu>
-        <button [disabled]="!isConnectedToNode()" color="accent" mat-button routerLink="/plugin-list"
-                routerLinkActive="active-route">
-            <mat-icon>settings_input_component</mat-icon>
-            {{ 'header.menu.plugins' | translate | uppercase }}
-        </button>
+        <!-- <button [disabled]="!isConnectedToNode()" color="accent" mat-button routerLink="/plugin-list"
+                 routerLinkActive="active-route">
+             <mat-icon>settings_input_component</mat-icon>
+             {{ 'header.menu.plugins' | translate | uppercase }}
+         </button>-->
         <button [disabled]="!isConnectedToNode()" [matMenuTriggerFor]="menuD" [ngClass]="isAccessControlRouteActive()"
                 color="accent" mat-button>
             <mat-icon>fingerprint</mat-icon>
@@ -94,6 +98,11 @@
     <span fxFlex></span>
 
     <form [formGroup]="formNodes" fxFlex.gt-md="25" fxFlex.lt-lg="40">
+        <button (click)="connectSettings()" [matTooltipShowDelay]="1000" color="accent"
+                mat-icon-button matTooltipClass="tooltip-teal"
+                matTooltip="{{'header.menu.settings_tooltip' | translate}}">
+            <mat-icon>settings</mat-icon>
+        </button>
         <mat-form-field class="small-font" color="accent" fxFlex>
             <input [matAutocomplete]="auto" [matTooltipShowDelay]="1000" aria-label=""
                    formControlName="node"
@@ -110,6 +119,7 @@
             <mat-error *ngIf="nodeField.invalid && (nodeField.dirty || nodeField.touched)">
                 <div *ngIf="nodeField.errors.required">{{ 'header.menu.error_node_field' | translate }}</div>
             </mat-error>
+            <mat-hint>{{'header.menu.kong_node_hint' | translate}}</mat-hint>
         </mat-form-field>
         <button (click)="connectToNode()" [matTooltipShowDelay]="1000" color="accent"
                 mat-icon-button
@@ -120,7 +130,7 @@
     </form>
 </mat-toolbar>
 
-<router-outlet></router-outlet>
+<router-outlet id="body-container"></router-outlet>
 
 <footer fxLayout="row" fxLayoutAlign="space-between center" id="footer-container">
     <div>

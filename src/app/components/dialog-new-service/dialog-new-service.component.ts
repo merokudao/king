@@ -1,14 +1,14 @@
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { sortedUniq as _sortedUniq } from 'lodash';
-import { AutoUnsubscribe } from 'ngx-auto-unsubscribe';
-import { ApiService } from '../../services/api.service';
-import { ToastService } from '../../services/toast.service';
-import { CustomValidators } from '../../shared/custom-validators';
+import {COMMA, ENTER} from '@angular/cdk/keycodes';
+import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
+import {AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators} from '@angular/forms';
+import {MatAutocompleteSelectedEvent} from '@angular/material/autocomplete';
+import {MatChipInputEvent} from '@angular/material/chips';
+import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {sortedUniq as _sortedUniq} from 'lodash';
+import {AutoUnsubscribe} from 'ngx-auto-unsubscribe';
+import {ApiService} from '../../services/api.service';
+import {ToastService} from '../../services/toast.service';
+import {CustomValidators} from '../../shared/custom-validators';
 
 @AutoUnsubscribe()
 @Component({
@@ -26,6 +26,7 @@ export class DialogNewServiceComponent implements OnInit, OnDestroy {
     allTags = [];
     editMode = false;
     readonly separatorKeysCodes: number[] = [ENTER, COMMA];
+    services = [];
 
     form = this.fb.group({
         name: ['', [Validators.required, CustomValidators.isAlphaNum()]],
@@ -48,38 +49,67 @@ export class DialogNewServiceComponent implements OnInit, OnDestroy {
     }, {validators: [ProtocolPathValidator()]});
 
     constructor(@Inject(MAT_DIALOG_DATA) public serviceIdEdit: any, private fb: FormBuilder, private api: ApiService, private toast: ToastService,
-                public dialogRef: MatDialogRef<DialogNewServiceComponent>) { }
+                public dialogRef: MatDialogRef<DialogNewServiceComponent>) {
+    }
 
     /*
         Getters de campos del formulario
      */
-    get nameField() { return this.form.get('name'); }
+    get nameField() {
+        return this.form.get('name');
+    }
 
-    get inputMethodField() { return this.form.get('input_method'); }
+    get inputMethodField() {
+        return this.form.get('input_method');
+    }
 
-    get enabledField() { return this.form.get('enabled'); }
+    get enabledField() {
+        return this.form.get('enabled');
+    }
 
-    get urlField() { return this.form.get('url'); }
+    get urlField() {
+        return this.form.get('url');
+    }
 
-    get protocolField() { return this.form.get('protocol'); }
+    get protocolField() {
+        return this.form.get('protocol');
+    }
 
-    get hostField() { return this.form.get('host'); }
+    get hostField() {
+        return this.form.get('host');
+    }
 
-    get portField() { return this.form.get('port'); }
+    get portField() {
+        return this.form.get('port');
+    }
 
-    get pathField() { return this.form.get('path'); }
+    get pathField() {
+        return this.form.get('path');
+    }
 
-    get retriesField() { return this.form.get('retries'); }
+    get retriesField() {
+        return this.form.get('retries');
+    }
 
-    get connectTimeoutField() { return this.form.get('connect_timeout'); }
+    get connectTimeoutField() {
+        return this.form.get('connect_timeout');
+    }
 
-    get writeTimeoutField() { return this.form.get('write_timeout'); }
+    get writeTimeoutField() {
+        return this.form.get('write_timeout');
+    }
 
-    get readTimeoutField() { return this.form.get('read_timeout'); }
+    get readTimeoutField() {
+        return this.form.get('read_timeout');
+    }
 
-    get tlsVerifyDepthField() { return this.form.get('tls_verify_depth'); }
+    get tlsVerifyDepthField() {
+        return this.form.get('tls_verify_depth');
+    }
 
-    get caCertificatesField() { return this.form.get('ca_certificates'); }
+    get caCertificatesField() {
+        return this.form.get('ca_certificates');
+    }
 
     ngOnInit(): void {
         // Recupero la lista de certificados
@@ -135,9 +165,36 @@ export class DialogNewServiceComponent implements OnInit, OnDestroy {
                 this.allTags.sort();
                 this.allTags = _sortedUniq(this.allTags);
             });
+
+        // Retrieve the list of services
+        this.api.getServices()
+            .subscribe({
+                next: (ss) => {
+                    this.services = ss['data'];
+                },
+                error: () => this.toast.error('error.node_connection'),
+            });
     }
 
     ngOnDestroy(): void {
+    }
+
+    onServiceChange(event) {
+        // Find the selected route in the routes array
+        const selectedService = this.services.find(svc => svc.id === event.value);
+        const selectedServiceCopy = {...selectedService};
+
+        if (selectedService) {
+            // Prepare the data for the form based on the selected route
+            const formData = this.prepareDataForForm(selectedServiceCopy);
+
+            // Update the form with the data from the selected route
+            this.form.patchValue(formData);
+
+            // Enable fields
+            this.form.controls['input_method'].setValue('complete');
+            this.changeRadio();
+        }
     }
 
     /*

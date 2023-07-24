@@ -2,6 +2,7 @@
     "error": {
         "unknown": "Error desconocido",
         "node_connection": "Error al conectar con el nodo de Kong",
+        "load_loopback": "Error al recoger la información de Loopback",
         "route_mode": "Error al obtener el modo de funcionamiento del Router de Kong",
         "get_data": "Error obteniendo información",
         "title": "Error en la operación - {{extra}}",
@@ -80,7 +81,9 @@
         "enabled": "Habilitado",
         "seconds": "segundos",
         "to": "hasta",
-        "consumer": "Consumidor"
+        "consumer": "Consumidor",
+        "templates": "Plantillas disponibles",
+        "templates_hint": "Puedes usar un elemento creado previamente como plantilla para el nuevo"
     },
     "pagination": {
         "itemsPerPageLabel": "Elementos por página:",
@@ -134,6 +137,20 @@
             "developer": "King está desarrollado por",
             "github": "Puedes encontrar el proyecto en",
             "page": "Página del proyecto"
+        },
+        "settings": {
+            "header": "Configuración",
+            "config": "General",
+            "config_url": "Url del fichero de configuración",
+            "config_url_hint": "Url que apunta a un fichero .json de configuración",
+            "documentation": "Ver más documentación",
+            "loopback": "Kong API Loopback",
+            "error": {
+                "general": "Hay errores en algún campo de configuración",
+                "config_url": "Debe ser una url válida apuntando a un fichero .json"
+            },
+            "save": "Guardar configuración",
+            "saved": "Configuración actualizada"
         }
     },
     "header": {
@@ -156,7 +173,9 @@
             "keys": "API keys",
             "jwt": "Tokens JWT",
             "oauth2": "Credenciales OAuth 2.0",
+            "settings_tooltip": "Configuración de King",
             "kong_node": "API de administración de un nodo de Kong",
+            "kong_node_hint": "Indica la ruta a la api de administración de Kong",
             "kong_node_tooltip": "Introduce la URL y puerto",
             "kong_node_button_tooltip": "Conectar",
             "error_node_field": "Introduce una url válida. Formato: http(s)://<admin-api>:<port>"
@@ -242,7 +261,9 @@
         "cluster_api": "Api",
         "cluster_consumers": "consumidores",
         "cluster_title": "Doble click para expandir todos los elementos",
-        "labels": "Etiquetas"
+        "labels": "Etiquetas",
+        "global_search": "Búsqueda global",
+        "global_search_hint": "Busca cualquier elemento por su ID o nombre"
     },
     "service": {
         "label": "Servicio",
@@ -536,10 +557,14 @@
             "min": "Número mayor de {{min}}",
             "max": "Número menor de {{max}}",
             "min_max": "Número entre {{min}} y {{max}}",
-            "map": "Formato a usar -> campo.subcampo:valor",
+            "map": "Formato JSON. Ejemplo -> {\"request.headers\":\"return nil\"}",
             "add_to_list": "Añadir a la lista",
             "clean_list": "Vaciar la lista",
             "comma_separated_hint": "Valores separados por comas"
+        },
+        "error": {
+            "map": "El campo {{field}} debe ser un JSON válido",
+            "readMap": "Error leyendo el campo {{field}}: no es un JSON válido"
         }
     },
     "target": {

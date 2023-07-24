@@ -2,6 +2,7 @@
     "error": {
         "unknown": "Unknown error",
         "node_connection": "Error connecting to Kong node",
+        "load_loopback": "Error collecting Loopback information",
         "route_mode": "Failed to get Kong`s Router operating mode",
         "get_data": "Error getting data",
         "title": "Error in the operation - {{extra}}",
@@ -80,7 +81,9 @@
         "enabled": "Habilitado",
         "seconds": "seconds",
         "to": "until",
-        "consumer": "Consumer"
+        "consumer": "Consumer",
+        "templates": "Templates available",
+        "templates_hint": "You can use a previously created element as a template for the new one"
     },
     "pagination": {
         "itemsPerPageLabel": "Items per page:",
@@ -134,6 +137,20 @@
             "developer": "King is developed by",
             "github": "You can find the project in",
             "page": "Project page"
+        },
+        "settings": {
+            "header": "Configuration",
+            "config": "General",
+            "config_url": "Configuration file url",
+            "config_url_hint": "Url pointing to a .json configuration file",
+            "documentation": "See more documentation",
+            "loopback": "Kong API Loopback",
+            "error": {
+                "general": "There are errors in some configuration field",
+                "config_url": "Must be a valid url pointing to a .json file"
+            },
+            "save": "Save settings",
+            "saved": "Settings updated"
         }
     },
     "header": {
@@ -156,7 +173,9 @@
             "keys": "API keys",
             "jwt": "JWT tokens",
             "oauth2": "OAuth 2.0 Credentials",
+            "settings_tooltip": "King configuration",
             "kong_node": "Kong node admin API",
+            "kong_node_hint": "Type the path to the Kong admin api",
             "kong_node_tooltip": "Type in the URL and port",
             "kong_node_button_tooltip": "Connect",
             "error_node_field": "Must be a valid url. Format: http(s)://<admin-api>:<port>"
@@ -242,7 +261,9 @@
         "cluster_api": "Api",
         "cluster_consumers": "consumers",
         "cluster_title": "Double click to expand all elements",
-        "labels": "Labels"
+        "labels": "Labels",
+        "global_search": "Global search",
+        "global_search_hint": "Search for any element by its ID or name"
     },
     "service": {
         "label": "Service",
@@ -536,10 +557,14 @@
             "min": "Number greater than {{min}}",
             "max": "Number lower than {{max}}",
             "min_max": "Number between {{min}} and {{max}}",
-            "map": "Format to use -> field.subfield:valor",
+            "map": "JSON format. Example -> {\"request.headers\":\"return nil\"}",
             "add_to_list": "Add to list",
             "clean_list": "Empty list",
             "comma_separated_hint": "Comma separated values"
+        },
+        "error": {
+            "map": "Field {{field}} must be a valid JSON",
+            "readMap": "Error reading the field {{field}}: it is not a valid JSON"
         }
     },
     "target": {
